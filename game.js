@@ -158,8 +158,8 @@ class SlitherGame {
             targetRadius: this.worldSize / 2 - 100,
             targetX: this.worldSize / 2,
             targetY: this.worldSize / 2,
-            shrinkTimer: 300, // First shrink after 5 seconds
-            phase: 0,
+            shrinkTimer: 300,
+            expanding: false,
             damageTimer: 0
         };
     }
@@ -246,47 +246,57 @@ class SlitherGame {
     updateStorm(delta) {
         const s = this.storm;
 
-        // Countdown to next shrink
+        // Countdown to next phase change
         s.shrinkTimer -= delta;
-        if (s.shrinkTimer <= 0 && s.radius > 600) {
-            s.phase++;
-            s.shrinkTimer = 400 + Math.random() * 200; // Next shrink in ~7-10 seconds
+        if (s.shrinkTimer <= 0) {
+            s.shrinkTimer = 300 + Math.random() * 150; // 5-7.5 seconds between changes
+            s.expanding = !s.expanding; // Toggle direction
 
-            // New target - shrink and move
-            s.targetRadius = Math.max(500, s.radius - 300 - s.phase * 50);
-            s.targetX = this.worldSize / 2 + (Math.random() - 0.5) * 800;
-            s.targetY = this.worldSize / 2 + (Math.random() - 0.5) * 800;
+            // Calculate new target
+            const minRadius = 800;
+            const maxRadius = this.worldSize / 2 - 200;
+
+            if (s.expanding) {
+                s.targetRadius = Math.min(maxRadius, s.radius + 400 + Math.random() * 200);
+            } else {
+                s.targetRadius = Math.max(minRadius, s.radius - 300 - Math.random() * 200);
+            }
+
+            // Move center slightly
+            s.targetX = this.worldSize / 2 + (Math.random() - 0.5) * 600;
+            s.targetY = this.worldSize / 2 + (Math.random() - 0.5) * 600;
         }
 
         // Smoothly move toward target
-        s.radius += (s.targetRadius - s.radius) * 0.005 * delta;
-        s.x += (s.targetX - s.x) * 0.005 * delta;
-        s.y += (s.targetY - s.y) * 0.005 * delta;
+        s.radius += (s.targetRadius - s.radius) * 0.008 * delta;
+        s.x += (s.targetX - s.x) * 0.008 * delta;
+        s.y += (s.targetY - s.y) * 0.008 * delta;
 
-        // Damage penguins outside storm
+        // Damage penguins outside storm - 10% of length every 0.5s
         s.damageTimer -= delta;
         if (s.damageTimer <= 0) {
-            s.damageTimer = 30; // Damage tick every 0.5 seconds
+            s.damageTimer = 30; // 0.5 seconds at 60fps
 
             // Check player
             if (!this.player.isDead) {
                 const ph = this.player.segments[0];
                 const dist = this.dist(ph.x, ph.y, s.x, s.y);
                 if (dist > s.radius) {
-                    this.player.targetLength -= 2; // Storm damage
+                    const damage = this.player.targetLength * 0.1; // 10% damage
+                    this.player.targetLength -= damage;
                     if (this.player.targetLength < 5) {
                         this.killPenguin(this.player, null);
                     }
                 }
             }
 
-            // Check enemies
+            // Check enemies - same 10% damage
             for (const e of this.enemies) {
                 if (e.isDead) continue;
                 const eh = e.segments[0];
                 const dist = this.dist(eh.x, eh.y, s.x, s.y);
                 if (dist > s.radius) {
-                    e.targetLength -= 1.5;
+                    e.targetLength *= 0.9; // 10% damage
                     if (e.targetLength < 5) {
                         e.isDead = true;
                     }
@@ -314,58 +324,82 @@ class SlitherGame {
 
             e.changeTimer -= delta;
             if (e.changeTimer <= 0) {
-                e.changeTimer = 25 + Math.random() * 35;
+                e.changeTimer = 15 + Math.random() * 25; // Faster reactions
                 const h = e.segments[0];
                 const ph = this.player.segments[0];
                 const distToPlayer = this.dist(h.x, h.y, ph.x, ph.y);
 
                 // Set personality once
                 if (e.aggressive === undefined) e.aggressive = Math.random();
+                if (e.smart === undefined) e.smart = Math.random();
 
-                // Hunt player if bigger
-                if (e.aggressive > 0.5 && distToPlayer < 350 && e.targetLength > this.player.targetLength * 1.2 && !this.player.isDead) {
-                    e.targetAngle = Math.atan2(ph.y - h.y, ph.x - h.x);
-                    e.isHunting = true;
-                }
-                // Run away if player is bigger
-                else if (distToPlayer < 250 && this.player.targetLength > e.targetLength * 1.2) {
-                    e.targetAngle = Math.atan2(h.y - ph.y, h.x - ph.x);
+                // PRIORITY 1: Avoid storm
+                const distToStormCenter = this.dist(h.x, h.y, this.storm.x, this.storm.y);
+                if (distToStormCenter > this.storm.radius - 150) {
+                    e.targetAngle = Math.atan2(this.storm.y - h.y, this.storm.x - h.x);
                     e.isHunting = false;
                 }
-                // Look for food
+                // PRIORITY 2: Look for gold orbs (valuable!)
+                else if (e.smart > 0.4) {
+                    let goldOrb = null, gd = Infinity;
+                    for (const f of this.foods) {
+                        if (f.isGold) {
+                            const d = this.dist(h.x, h.y, f.x, f.y);
+                            if (d < gd && d < 400) { gd = d; goldOrb = f; }
+                        }
+                    }
+                    if (goldOrb) {
+                        e.targetAngle = Math.atan2(goldOrb.y - h.y, goldOrb.x - h.x);
+                        e.isHunting = true; // Boost toward gold!
+                    }
+                    // Hunt player if bigger
+                    else if (e.aggressive > 0.5 && distToPlayer < 300 && e.targetLength > this.player.targetLength * 1.3 && !this.player.isDead) {
+                        e.targetAngle = Math.atan2(ph.y - h.y, ph.x - h.x);
+                        e.isHunting = true;
+                    }
+                    // Run away if player is bigger
+                    else if (distToPlayer < 200 && this.player.targetLength > e.targetLength * 1.2) {
+                        e.targetAngle = Math.atan2(h.y - ph.y, h.x - ph.x);
+                        e.isHunting = false;
+                    }
+                    // Look for regular food
+                    else {
+                        let nearest = null, nd = Infinity;
+                        for (const f of this.foods) {
+                            const d = this.dist(h.x, h.y, f.x, f.y);
+                            if (d < nd && d < 300) { nd = d; nearest = f; }
+                        }
+                        if (nearest) e.targetAngle = Math.atan2(nearest.y - h.y, nearest.x - h.x);
+                        else e.targetAngle += (Math.random() - 0.5) * Math.PI * 0.5;
+                        e.isHunting = false;
+                    }
+                }
+                // Dumb bots just wander
                 else {
                     let nearest = null, nd = Infinity;
                     for (const f of this.foods) {
                         const d = this.dist(h.x, h.y, f.x, f.y);
-                        if (d < nd && d < 280) { nd = d; nearest = f; }
+                        if (d < nd && d < 200) { nd = d; nearest = f; }
                     }
                     if (nearest) e.targetAngle = Math.atan2(nearest.y - h.y, nearest.x - h.x);
-                    else e.targetAngle += (Math.random() - 0.5) * Math.PI * 0.6;
+                    else e.targetAngle += (Math.random() - 0.5) * Math.PI * 0.8;
                     e.isHunting = false;
                 }
 
                 // Avoid walls
-                if (h.x < 350) e.targetAngle = 0;
-                else if (h.x > this.worldSize - 350) e.targetAngle = Math.PI;
-                if (h.y < 350) e.targetAngle = Math.PI / 2;
-                else if (h.y > this.worldSize - 350) e.targetAngle = -Math.PI / 2;
-
-                // PRIORITY: Avoid storm - move toward safe zone center
-                const distToStormCenter = this.dist(h.x, h.y, this.storm.x, this.storm.y);
-                if (distToStormCenter > this.storm.radius - 200) {
-                    // Too close to edge or outside - run to center!
-                    e.targetAngle = Math.atan2(this.storm.y - h.y, this.storm.x - h.x);
-                    e.isHunting = false;
-                }
+                if (h.x < 300) e.targetAngle = 0;
+                else if (h.x > this.worldSize - 300) e.targetAngle = Math.PI;
+                if (h.y < 300) e.targetAngle = Math.PI / 2;
+                else if (h.y > this.worldSize - 300) e.targetAngle = -Math.PI / 2;
             }
 
             let d = e.targetAngle - e.angle;
             while (d > Math.PI) d -= Math.PI * 2;
             while (d < -Math.PI) d += Math.PI * 2;
-            e.angle += d * 0.06 * delta;
+            e.angle += d * 0.07 * delta; // Slightly faster turning
 
             // Boost when hunting
-            if (e.isHunting && e.targetLength > 14) {
+            if (e.isHunting && e.targetLength > 12) {
                 e.speed = e.boostSpeed;
                 e.targetLength -= 0.02 * delta;
             } else {
