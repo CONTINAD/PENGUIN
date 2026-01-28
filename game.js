@@ -199,17 +199,31 @@ class SlitherGame {
         });
     }
 
-    spawnKillOrbs(penguin) {
-        // Drop gold orbs worth the penguin's total value (wager + accumulated kills)
-        const totalValue = penguin.wager + (penguin.accumulatedKills || 0);
-        const orbCount = Math.min(15, Math.max(5, Math.floor(totalValue * 5)));
-        const valuePerOrb = totalValue / orbCount;
+    spawnKillOrbs(victim, killer) {
+        // Victim's total value = wager + any kills they collected
+        const totalValue = victim.wager + (victim.accumulatedKills || 0);
+
+        // Killer gets 20% INSTANT
+        const killerBonus = totalValue * 0.2;
+        if (killer) {
+            killer.accumulatedKills = (killer.accumulatedKills || 0) + killerBonus;
+            // Update UI if killer is player
+            if (killer.isPlayer) {
+                this.totalEarnings += killerBonus;
+                if (this.onWagerUpdate) this.onWagerUpdate(this.totalEarnings);
+            }
+        }
+
+        // 80% drops as gold orbs on the ground
+        const orbValue = totalValue * 0.8;
+        const orbCount = Math.min(12, Math.max(4, Math.floor(orbValue * 4)));
+        const valuePerOrb = orbValue / orbCount;
 
         for (let i = 0; i < orbCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 30 + Math.random() * 80;
-            const ox = penguin.segments[0].x + Math.cos(angle) * dist;
-            const oy = penguin.segments[0].y + Math.sin(angle) * dist;
+            const dist = 25 + Math.random() * 70;
+            const ox = victim.segments[0].x + Math.cos(angle) * dist;
+            const oy = victim.segments[0].y + Math.sin(angle) * dist;
             this.spawnFood(ox, oy, 3, true, valuePerOrb);
         }
     }
@@ -425,6 +439,14 @@ class SlitherGame {
                 const f = this.foods[i];
                 if (this.dist(h.x, h.y, f.x, f.y) < e.headSize + f.size) {
                     e.targetLength += f.value * 0.3;
+
+                    // Bots collect gold/money too!
+                    if (f.isGold && f.solValue > 0) {
+                        e.accumulatedKills = (e.accumulatedKills || 0) + f.solValue;
+                        // Increase their displayed wager to show they're rich (optional but cooler)
+                        e.wager += f.solValue;
+                    }
+
                     this.foods.splice(i, 1);
                 }
             }
@@ -509,8 +531,8 @@ class SlitherGame {
             this.spawnFood(s.x + (Math.random() - 0.5) * 30, s.y + (Math.random() - 0.5) * 30, 2);
         }
 
-        // Drop GOLD orbs with SOL value (must be collected!)
-        this.spawnKillOrbs(v);
+        // Drop GOLD orbs - killer gets 20%, 80% on ground
+        this.spawnKillOrbs(v, k);
 
         if (v.isPlayer) setTimeout(() => this.onGameOver && this.onGameOver(Math.floor(this.player.targetLength), false, this.totalEarnings), 800);
     }
