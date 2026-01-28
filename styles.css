@@ -1,20 +1,26 @@
 /* ===== CSS Variables ===== */
 :root {
-    --bg-dark: #0a0b14;
-    --bg-card: rgba(15, 17, 28, 0.9);
-    --bg-card-hover: rgba(20, 22, 35, 0.95);
-    --accent-gold: #f5a623;
-    --accent-gold-dark: #c47f0a;
-    --accent-gold-glow: rgba(245, 166, 35, 0.4);
-    --accent-blue: #5865f2;
-    --accent-green: #00d26a;
+    --bg-dark: #020b14;
+    /* Deep Arctic Night */
+    --bg-card: rgba(12, 28, 45, 0.8);
+    /* Icy Glass */
+    --bg-card-hover: rgba(18, 40, 60, 0.9);
+    --accent-gold: #fbbf24;
+    --accent-gold-dark: #d97706;
+    --accent-gold-glow: rgba(251, 191, 36, 0.3);
+    --accent-blue: #00f3ff;
+    /* Arctic Cyan */
+    --accent-green: #34d399;
+    /* Aurora Green */
     --accent-red: #ff4757;
-    --text-primary: #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.6);
-    --text-muted: rgba(255, 255, 255, 0.4);
-    --border-color: rgba(255, 255, 255, 0.1);
-    --glow-blue: rgba(88, 101, 242, 0.3);
-    --glow-purple: rgba(147, 51, 234, 0.3);
+    --text-primary: #e0f2fe;
+    /* Ice White */
+    --text-secondary: rgba(224, 242, 254, 0.7);
+    --text-muted: rgba(224, 242, 254, 0.4);
+    --border-color: rgba(0, 243, 255, 0.15);
+    --glow-blue: rgba(0, 243, 255, 0.15);
+    --glow-purple: rgba(56, 189, 248, 0.15);
+    /* Light Blue Glow */
 }
 
 /* ===== Reset & Base ===== */
@@ -34,18 +40,32 @@ body {
 }
 
 /* ===== Animated Background ===== */
-.hex-grid {
+.snow-layer {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(2.5px 2.5px at 90px 40px, rgba(255, 255, 255, 0.4), transparent),
+        radial-gradient(1.5px 1.5px at 160px 120px, rgba(255, 255, 255, 0.7), transparent);
+    background-size: 300px 300px;
+    animation: snowFall 15s linear infinite;
+    opacity: 0.4;
+}
+
+@keyframes snowFall {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 30px 300px;
+    }
 }
 
 .glow-orb {
@@ -874,7 +894,9 @@ body.game-active .game-console {
         opacity: 1;
         transform: translateX(0);
     }
-}/* ===== Horizontal Layout (Desktop) ===== */
+}
+
+/* ===== Horizontal Layout (Desktop) ===== */
 @media (min-width: 1100px) {
     .container {
         display: grid;
@@ -983,6 +1005,7 @@ body.game-active .game-console {
     margin-bottom: 5px;
     background: linear-gradient(to right, #ffd700, #ffaa00);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
     font-weight: 800;
@@ -991,6 +1014,7 @@ body.game-active .game-console {
 .modal-title.loss {
     background: linear-gradient(to right, #ff4757, #ff6b81);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 

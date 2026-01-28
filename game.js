@@ -201,7 +201,7 @@ class SlitherGame {
         this.foods.push({
             x, y, value,
             size: isGold ? 12 : 6 + value * 2,
-            hue: isGold ? 50 : Math.random() * 60 + 20,
+            hue: isGold ? 50 : Math.random() * 60 + 170, // Arctic Blue/Cyan range
             isGold,
             solValue
         });
@@ -580,7 +580,7 @@ class SlitherGame {
 
     render() {
         const ctx = this.ctx;
-        ctx.fillStyle = '#0a1525';
+        ctx.fillStyle = '#020b14'; // Deep Arctic
         ctx.fillRect(0, 0, this.width, this.height);
 
         ctx.save();
@@ -603,7 +603,7 @@ class SlitherGame {
         const s = this.storm;
 
         // Draw safe zone circle
-        ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+        ctx.strokeStyle = 'rgba(200, 240, 255, 0.5)';
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
@@ -615,13 +615,13 @@ class SlitherGame {
         ctx.rect(0, 0, this.worldSize, this.worldSize);
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2, true); // counter-clockwise to create hole
         ctx.closePath();
-        ctx.fillStyle = 'rgba(128, 0, 128, 0.25)';
+        ctx.fillStyle = 'rgba(200, 245, 255, 0.15)'; // Freezing Fog
         ctx.fill();
         ctx.restore();
 
         // Pulse effect on edge
         const pulse = Math.sin(performance.now() / 200) * 0.3 + 0.7;
-        ctx.strokeStyle = `rgba(255, 50, 100, ${pulse * 0.5})`;
+        ctx.strokeStyle = `rgba(0, 243, 255, ${pulse * 0.6})`;
         ctx.lineWidth = 8;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
@@ -630,7 +630,7 @@ class SlitherGame {
 
     drawGrid() {
         const ctx = this.ctx, gs = 100;
-        ctx.strokeStyle = 'rgba(50, 120, 180, 0.1)';
+        ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)'; // Faint Cyan Grid
         ctx.lineWidth = 1;
 
         const sx = Math.floor(this.camera.x / gs) * gs;
