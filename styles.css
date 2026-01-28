@@ -1242,3 +1242,14 @@ body.game-active .container {
     align-items: flex-start !important;
     top: 30px !important;
 }
+
+/* ===== Fix HUD Cutoff on Left ===== */
+.game-active .game-hud {
+    left: 40px !important; /* Increase from 30px to 40px */
+    top: 40px !important;
+}
+
+/* ===== Safe margin for HUD ===== */
+.game-active .game-hud {
+    left: 60px !important;
+}
