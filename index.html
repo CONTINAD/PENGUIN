@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>$PENGUIN | Slither & Earn</title>
+    <meta name="description"
+        content="Play Slither, wager SOL, and earn $PENGUIN. The ultimate crypto gaming experience.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="hex-grid"></div>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <img src="penguin_mascot_1769617105718.png" alt="Penguin" class="mascot">
+                <span class="logo-text">$PENGUIN</span>
+            </div>
+            <div class="live-stats">
+                <div class="stat">
+                    <span class="stat-value" id="playersOnline">127</span>
+                    <span class="stat-label">Playing Now</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="totalWinnings">45,892</span>
+                    <span class="stat-label">SOL Won</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Game Console -->
+        <main class="game-console">
+            <!-- Wallet Section -->
+            <div class="wallet-section">
+                <div class="wallet-balance">
+                    <span class="balance-label">Your Balance</span>
+                    <span class="balance-value"><span id="userBalance">0.00</span> SOL</span>
+                </div>
+                <div class="wallet-actions">
+                    <button class="btn btn-secondary" id="connectWallet">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+                        </svg>
+                        Connect Wallet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wager Selection -->
+            <div class="wager-section">
+                <h3 class="section-title">Choose Your Wager</h3>
+                <div class="wager-options">
+                    <button class="wager-btn" data-amount="0.1">0.1 SOL</button>
+                    <button class="wager-btn active" data-amount="0.5">0.5 SOL</button>
+                    <button class="wager-btn" data-amount="1">1 SOL</button>
+                    <button class="wager-btn" data-amount="5">5 SOL</button>
+                </div>
+                <div class="wager-info">
+                    <span>🏆 Top 3 split the pot!</span>
+                    <span>💎 +10% $PENGUIN bonus</span>
+                </div>
+            </div>
+
+            <!-- Play Button -->
+            <button class="btn btn-primary btn-play" id="playButton">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                PLAY NOW
+                <div class="btn-shine"></div>
+            </button>
+
+            <!-- Game Canvas (Hidden until game starts) -->
+            <div class="game-wrapper" id="gameWrapper">
+                <canvas id="gameCanvas"></canvas>
+                <div class="game-hud">
+                    <div class="hud-item">
+                        <span class="hud-label">Length</span>
+                        <span class="hud-value" id="snakeLength">10</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Rank</span>
+                        <span class="hud-value" id="playerRank">#1</span>
+                    </div>
+                    <div class="hud-item">
+                        <span class="hud-label">Earnings</span>
+                        <span class="hud-value" id="prizePool">+0.00 SOL</span>
+                    </div>
+                </div>
+                <button class="btn btn-danger" id="exitGame">Exit Game</button>
+            </div>
+
+            <!-- Recent Winners -->
+            <div class="winners-section">
+                <h3 class="section-title">🏆 Recent Winners</h3>
+                <div class="winners-list" id="winnersList">
+                    <div class="winner-item">
+                        <span class="winner-name">🥇 PenguinKing</span>
+                        <span class="winner-prize">+2.34 SOL</span>
+                    </div>
+                    <div class="winner-item">
+                        <span class="winner-name">🥈 SlitherPro</span>
+                        <span class="winner-prize">+1.12 SOL</span>
+                    </div>
+                    <div class="winner-item">
+                        <span class="winner-name">🥉 CryptoSnake</span>
+                        <span class="winner-prize">+0.54 SOL</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Token Info -->
+        <section class="token-section">
+            <h2 class="section-header">$PENGUIN Tokenomics</h2>
+            <div class="token-grid">
+                <div class="token-card">
+                    <span class="token-icon">🎮</span>
+                    <span class="token-title">Play to Earn</span>
+                    <span class="token-desc">Win games, earn $PENGUIN tokens</span>
+                </div>
+                <div class="token-card">
+                    <span class="token-icon">🔥</span>
+                    <span class="token-title">5% Burn</span>
+                    <span class="token-desc">Every game burns tokens</span>
+                </div>
+                <div class="token-card">
+                    <span class="token-icon">💰</span>
+                    <span class="token-title">Holder Rewards</span>
+                    <span class="token-desc">3% distributed to holders</span>
+                </div>
+                <div class="token-card">
+                    <span class="token-icon">🚀</span>
+                    <span class="token-title">0% Tax</span>
+                    <span class="token-desc">Buy and sell freely</span>
+                </div>
+            </div>
+            <div class="ca-section">
+                <span class="ca-label">Contract Address</span>
+                <div class="ca-box" id="caBox">
+                    <span id="caAddress">Coming Soon on Pump.fun</span>
+                    <button class="copy-btn" id="copyCA">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="cta-buttons">
+                <a href="#" class="btn btn-primary btn-cta">
+                    Buy on Pump.fun
+                    <div class="btn-shine"></div>
+                </a>
+                <a href="#" class="btn btn-secondary btn-cta">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    Twitter
+                </a>
+                <a href="#" class="btn btn-secondary btn-cta">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+                    </svg>
+                    Discord
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 $PENGUIN. Play responsibly. 🐹</p>
+        </footer>
+    </div>
+
+    <!-- Discord Floating Button -->
+    <a href="#" class="discord-float">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path
+                d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+        </svg>
+        Join Discord!
+    </a>
+
+    <script src="game.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

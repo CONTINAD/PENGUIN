@@ -1,0 +1,675 @@
+// ===== Optimized Penguin Slither Game =====
+
+class SlitherGame {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.isRunning = false;
+        this.animationId = null;
+
+        // Game world
+        this.worldSize = 5000;
+        this.camera = { x: 0, y: 0 };
+        this.zoom = 0.6;
+
+        // Player
+        this.player = null;
+        this.targetAngle = 0;
+        this.mousePos = { x: 0, y: 0 };
+        this.isBoosting = false;
+
+        // Wager
+        this.playerWager = 0;
+        this.totalEarnings = 0;
+
+        // AI
+        this.enemies = [];
+        this.maxEnemies = 15;
+
+        // Food
+        this.foods = [];
+        this.maxFood = 400;
+
+        // Callbacks
+        this.onScoreUpdate = null;
+        this.onGameOver = null;
+        this.onRankUpdate = null;
+        this.onWagerUpdate = null;
+        this.onKill = null;
+
+        // Storm zone
+        this.storm = {
+            x: 2500,
+            y: 2500,
+            radius: 2400,
+            targetRadius: 2400,
+            targetX: 2500,
+            targetY: 2500,
+            shrinkTimer: 0,
+            phase: 0,
+            damageTimer: 0
+        };
+
+        this.setupCanvas();
+        this.bindControls();
+    }
+
+    setupCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+    }
+
+    bindControls() {
+        this.canvas.addEventListener('mousemove', (e) => {
+            this.mousePos.x = e.clientX;
+            this.mousePos.y = e.clientY;
+        });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.mousePos.x = e.touches[0].clientX;
+            this.mousePos.y = e.touches[0].clientY;
+        }, { passive: false });
+
+        this.canvas.addEventListener('mousedown', () => this.isBoosting = true);
+        this.canvas.addEventListener('mouseup', () => this.isBoosting = false);
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.mousePos.x = e.touches[0].clientX;
+            this.mousePos.y = e.touches[0].clientY;
+            this.isBoosting = true;
+        }, { passive: false });
+        this.canvas.addEventListener('touchend', () => this.isBoosting = false);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') this.isBoosting = true;
+            if (e.code === 'KeyQ') this.handleCashOut();
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') this.isBoosting = false;
+        });
+
+        window.addEventListener('resize', () => this.setupCanvas());
+    }
+
+    setWager(amount) { this.playerWager = amount; }
+
+    handleCashOut() {
+        if (this.player && !this.player.isDead) {
+            this.player.isDead = true;
+            if (this.onGameOver) this.onGameOver(Math.floor(this.player.targetLength), true, this.playerWager + this.totalEarnings);
+        }
+    }
+
+    createPenguin(x, y, length, isPlayer = false, wager = 0) {
+        const hue = isPlayer ? 200 : Math.random() * 360;
+        return {
+            segments: Array.from({ length: length * 2 }, (_, i) => ({ x: x - i * 5, y })),
+            angle: Math.random() * Math.PI * 2,
+            speed: isPlayer ? 5 : 3.5,
+            baseSpeed: isPlayer ? 5 : 3.5,
+            boostSpeed: isPlayer ? 9 : 5,
+            length, targetLength: length,
+            isPlayer, isDead: false,
+            headSize: 18,
+            hue,
+            color: isPlayer ? '#3498db' : `hsl(${hue}, 65%, 50%)`,
+            targetAngle: Math.random() * Math.PI * 2,
+            changeTimer: 0,
+            wager,
+            name: isPlayer ? 'You' : ['IcyPenguin', 'ArcticKing', 'FrostyBoi', 'SnowSlider', 'ColdCash', 'BlizzardPro'][Math.floor(Math.random() * 6)]
+        };
+    }
+
+    start() {
+        this.setupCanvas();
+        this.reset();
+        this.isRunning = true;
+        this.lastTime = performance.now();
+        this.gameLoop();
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.animationId) cancelAnimationFrame(this.animationId);
+    }
+
+    reset() {
+        const c = this.worldSize / 2;
+        this.player = this.createPenguin(c, c, 18, true, this.playerWager);
+        this.totalEarnings = 0;
+        this.mousePos = { x: this.width / 2, y: this.height / 2 };
+
+        this.enemies = [];
+        for (let i = 0; i < this.maxEnemies; i++) this.spawnEnemy();
+
+        this.foods = [];
+        for (let i = 0; i < this.maxFood; i++) this.spawnFood();
+
+        this.updateCamera();
+
+        // Reset storm
+        this.storm = {
+            x: this.worldSize / 2,
+            y: this.worldSize / 2,
+            radius: this.worldSize / 2 - 100,
+            targetRadius: this.worldSize / 2 - 100,
+            targetX: this.worldSize / 2,
+            targetY: this.worldSize / 2,
+            shrinkTimer: 300, // First shrink after 5 seconds
+            phase: 0,
+            damageTimer: 0
+        };
+    }
+
+    spawnEnemy() {
+        const a = Math.random() * Math.PI * 2;
+        const d = 500 + Math.random() * (this.worldSize / 2 - 600);
+        const x = this.worldSize / 2 + Math.cos(a) * d;
+        const y = this.worldSize / 2 + Math.sin(a) * d;
+        const wager = Math.round((0.05 + Math.random() * 1.5) * 100) / 100;
+        this.enemies.push(this.createPenguin(x, y, 10 + Math.floor(Math.random() * 25), false, wager));
+    }
+
+    spawnFood(x, y, value = 1, isGold = false, solValue = 0) {
+        if (x === undefined) {
+            x = 100 + Math.random() * (this.worldSize - 200);
+            y = 100 + Math.random() * (this.worldSize - 200);
+        }
+        this.foods.push({
+            x, y, value,
+            size: isGold ? 12 : 6 + value * 2,
+            hue: isGold ? 50 : Math.random() * 60 + 20,
+            isGold,
+            solValue
+        });
+    }
+
+    spawnKillOrbs(penguin) {
+        // Drop gold orbs worth the penguin's total value (wager + accumulated kills)
+        const totalValue = penguin.wager + (penguin.accumulatedKills || 0);
+        const orbCount = Math.min(15, Math.max(5, Math.floor(totalValue * 5)));
+        const valuePerOrb = totalValue / orbCount;
+
+        for (let i = 0; i < orbCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 30 + Math.random() * 80;
+            const ox = penguin.segments[0].x + Math.cos(angle) * dist;
+            const oy = penguin.segments[0].y + Math.sin(angle) * dist;
+            this.spawnFood(ox, oy, 3, true, valuePerOrb);
+        }
+    }
+
+    gameLoop() {
+        if (!this.isRunning) return;
+        const now = performance.now();
+        const delta = Math.min((now - this.lastTime) / 16.67, 2);
+        this.lastTime = now;
+        this.update(delta);
+        this.render();
+        this.animationId = requestAnimationFrame(() => this.gameLoop());
+    }
+
+    update(delta) {
+        if (this.player.isDead) return;
+
+        const cx = this.width / 2, cy = this.height / 2;
+        this.targetAngle = Math.atan2(this.mousePos.y - cy, this.mousePos.x - cx);
+
+        let diff = this.targetAngle - this.player.angle;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        this.player.angle += diff * 0.1 * delta;
+
+        if (this.isBoosting && this.player.targetLength > 12) {
+            this.player.speed = this.player.boostSpeed;
+            this.player.targetLength -= 0.05 * delta;
+        } else {
+            this.player.speed = this.player.baseSpeed;
+        }
+
+        this.movePenguin(this.player, delta);
+        this.updateCamera();
+        this.updateEnemies(delta);
+        this.updateStorm(delta);
+        this.checkCollisions();
+
+        if (this.onScoreUpdate) this.onScoreUpdate(Math.floor(this.player.targetLength));
+        this.updateRank();
+
+        while (this.foods.length < this.maxFood) this.spawnFood();
+        while (this.enemies.filter(e => !e.isDead).length < this.maxEnemies) this.spawnEnemy();
+    }
+
+    updateStorm(delta) {
+        const s = this.storm;
+
+        // Countdown to next shrink
+        s.shrinkTimer -= delta;
+        if (s.shrinkTimer <= 0 && s.radius > 600) {
+            s.phase++;
+            s.shrinkTimer = 400 + Math.random() * 200; // Next shrink in ~7-10 seconds
+
+            // New target - shrink and move
+            s.targetRadius = Math.max(500, s.radius - 300 - s.phase * 50);
+            s.targetX = this.worldSize / 2 + (Math.random() - 0.5) * 800;
+            s.targetY = this.worldSize / 2 + (Math.random() - 0.5) * 800;
+        }
+
+        // Smoothly move toward target
+        s.radius += (s.targetRadius - s.radius) * 0.005 * delta;
+        s.x += (s.targetX - s.x) * 0.005 * delta;
+        s.y += (s.targetY - s.y) * 0.005 * delta;
+
+        // Damage penguins outside storm
+        s.damageTimer -= delta;
+        if (s.damageTimer <= 0) {
+            s.damageTimer = 30; // Damage tick every 0.5 seconds
+
+            // Check player
+            if (!this.player.isDead) {
+                const ph = this.player.segments[0];
+                const dist = this.dist(ph.x, ph.y, s.x, s.y);
+                if (dist > s.radius) {
+                    this.player.targetLength -= 2; // Storm damage
+                    if (this.player.targetLength < 5) {
+                        this.killPenguin(this.player, null);
+                    }
+                }
+            }
+
+            // Check enemies
+            for (const e of this.enemies) {
+                if (e.isDead) continue;
+                const eh = e.segments[0];
+                const dist = this.dist(eh.x, eh.y, s.x, s.y);
+                if (dist > s.radius) {
+                    e.targetLength -= 1.5;
+                    if (e.targetLength < 5) {
+                        e.isDead = true;
+                    }
+                }
+            }
+        }
+    }
+
+    movePenguin(p, delta) {
+        if (p.isDead) return;
+        const h = p.segments[0];
+        const nx = h.x + Math.cos(p.angle) * p.speed * delta;
+        const ny = h.y + Math.sin(p.angle) * p.speed * delta;
+
+        const m = 80;
+        const newHead = { x: Math.max(m, Math.min(this.worldSize - m, nx)), y: Math.max(m, Math.min(this.worldSize - m, ny)) };
+
+        p.segments.unshift(newHead);
+        while (p.segments.length > p.targetLength * 2) p.segments.pop();
+    }
+
+    updateEnemies(delta) {
+        for (const e of this.enemies) {
+            if (e.isDead) continue;
+
+            e.changeTimer -= delta;
+            if (e.changeTimer <= 0) {
+                e.changeTimer = 25 + Math.random() * 35;
+                const h = e.segments[0];
+                const ph = this.player.segments[0];
+                const distToPlayer = this.dist(h.x, h.y, ph.x, ph.y);
+
+                // Set personality once
+                if (e.aggressive === undefined) e.aggressive = Math.random();
+
+                // Hunt player if bigger
+                if (e.aggressive > 0.5 && distToPlayer < 350 && e.targetLength > this.player.targetLength * 1.2 && !this.player.isDead) {
+                    e.targetAngle = Math.atan2(ph.y - h.y, ph.x - h.x);
+                    e.isHunting = true;
+                }
+                // Run away if player is bigger
+                else if (distToPlayer < 250 && this.player.targetLength > e.targetLength * 1.2) {
+                    e.targetAngle = Math.atan2(h.y - ph.y, h.x - ph.x);
+                    e.isHunting = false;
+                }
+                // Look for food
+                else {
+                    let nearest = null, nd = Infinity;
+                    for (const f of this.foods) {
+                        const d = this.dist(h.x, h.y, f.x, f.y);
+                        if (d < nd && d < 280) { nd = d; nearest = f; }
+                    }
+                    if (nearest) e.targetAngle = Math.atan2(nearest.y - h.y, nearest.x - h.x);
+                    else e.targetAngle += (Math.random() - 0.5) * Math.PI * 0.6;
+                    e.isHunting = false;
+                }
+
+                // Avoid walls
+                if (h.x < 350) e.targetAngle = 0;
+                else if (h.x > this.worldSize - 350) e.targetAngle = Math.PI;
+                if (h.y < 350) e.targetAngle = Math.PI / 2;
+                else if (h.y > this.worldSize - 350) e.targetAngle = -Math.PI / 2;
+
+                // PRIORITY: Avoid storm - move toward safe zone center
+                const distToStormCenter = this.dist(h.x, h.y, this.storm.x, this.storm.y);
+                if (distToStormCenter > this.storm.radius - 200) {
+                    // Too close to edge or outside - run to center!
+                    e.targetAngle = Math.atan2(this.storm.y - h.y, this.storm.x - h.x);
+                    e.isHunting = false;
+                }
+            }
+
+            let d = e.targetAngle - e.angle;
+            while (d > Math.PI) d -= Math.PI * 2;
+            while (d < -Math.PI) d += Math.PI * 2;
+            e.angle += d * 0.06 * delta;
+
+            // Boost when hunting
+            if (e.isHunting && e.targetLength > 14) {
+                e.speed = e.boostSpeed;
+                e.targetLength -= 0.02 * delta;
+            } else {
+                e.speed = e.baseSpeed;
+            }
+
+            this.movePenguin(e, delta);
+
+            const h = e.segments[0];
+            for (let i = this.foods.length - 1; i >= 0; i--) {
+                const f = this.foods[i];
+                if (this.dist(h.x, h.y, f.x, f.y) < e.headSize + f.size) {
+                    e.targetLength += f.value * 0.3;
+                    this.foods.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    checkCollisions() {
+        if (this.player.isDead) return;
+        const ph = this.player.segments[0];
+
+        for (let i = this.foods.length - 1; i >= 0; i--) {
+            const f = this.foods[i];
+            if (this.dist(ph.x, ph.y, f.x, f.y) < this.player.headSize + f.size) {
+                this.player.targetLength += f.value * 0.4;
+
+                // Gold orbs grant SOL!
+                if (f.isGold && f.solValue > 0) {
+                    this.totalEarnings += f.solValue;
+                    this.player.accumulatedKills = (this.player.accumulatedKills || 0) + f.solValue;
+                    if (this.onWagerUpdate) this.onWagerUpdate(this.totalEarnings);
+                }
+
+                this.foods.splice(i, 1);
+            }
+        }
+
+        for (const e of this.enemies) {
+            if (e.isDead) continue;
+
+            for (let i = 6; i < e.segments.length; i += 2) {
+                const s = e.segments[i];
+                if (this.dist(ph.x, ph.y, s.x, s.y) < this.player.headSize + 8) {
+                    this.killPenguin(this.player, e);
+                    return;
+                }
+            }
+
+            const eh = e.segments[0];
+            for (let i = 6; i < this.player.segments.length; i += 2) {
+                const s = this.player.segments[i];
+                if (this.dist(eh.x, eh.y, s.x, s.y) < e.headSize + 8) {
+                    // Kill notification (collect the gold orbs to get money!)
+                    if (this.onKill) this.onKill(e.name, e.wager + (e.accumulatedKills || 0));
+                    this.killPenguin(e, this.player);
+                    break;
+                }
+            }
+        }
+    }
+
+    killPenguin(v, k) {
+        v.isDead = true;
+
+        // Drop regular food for growth
+        for (let i = 0; i < v.segments.length; i += 6) {
+            const s = v.segments[i];
+            this.spawnFood(s.x + (Math.random() - 0.5) * 30, s.y + (Math.random() - 0.5) * 30, 2);
+        }
+
+        // Drop GOLD orbs with SOL value (must be collected!)
+        this.spawnKillOrbs(v);
+
+        if (v.isPlayer) setTimeout(() => this.onGameOver && this.onGameOver(Math.floor(this.player.targetLength), false, this.totalEarnings), 800);
+    }
+
+    dist(x1, y1, x2, y2) { return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2); }
+
+    updateCamera() {
+        if (this.player.segments.length > 0) {
+            const h = this.player.segments[0];
+            this.camera.x += (h.x - this.width / 2 / this.zoom - this.camera.x) * 0.1;
+            this.camera.y += (h.y - this.height / 2 / this.zoom - this.camera.y) * 0.1;
+        }
+    }
+
+    updateRank() {
+        const all = [this.player, ...this.enemies].filter(s => !s.isDead);
+        all.sort((a, b) => b.targetLength - a.targetLength);
+        const rank = all.findIndex(s => s.isPlayer) + 1;
+        if (this.onRankUpdate) this.onRankUpdate(rank || all.length);
+    }
+
+    render() {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#0a1525';
+        ctx.fillRect(0, 0, this.width, this.height);
+
+        ctx.save();
+        ctx.scale(this.zoom, this.zoom);
+        ctx.translate(-this.camera.x, -this.camera.y);
+
+        this.drawGrid();
+        this.drawStorm();
+        this.drawFood();
+        for (const e of this.enemies) if (!e.isDead) this.drawPenguin(e);
+        if (!this.player.isDead) this.drawPenguin(this.player);
+
+        ctx.restore();
+        this.drawMinimap();
+        this.drawHUD();
+    }
+
+    drawStorm() {
+        const ctx = this.ctx;
+        const s = this.storm;
+
+        // Draw safe zone circle
+        ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Draw danger zone (outside circle) - create clipping path
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, this.worldSize, this.worldSize);
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2, true); // counter-clockwise to create hole
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(128, 0, 128, 0.25)';
+        ctx.fill();
+        ctx.restore();
+
+        // Pulse effect on edge
+        const pulse = Math.sin(performance.now() / 200) * 0.3 + 0.7;
+        ctx.strokeStyle = `rgba(255, 50, 100, ${pulse * 0.5})`;
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    drawGrid() {
+        const ctx = this.ctx, gs = 100;
+        ctx.strokeStyle = 'rgba(50, 120, 180, 0.1)';
+        ctx.lineWidth = 1;
+
+        const sx = Math.floor(this.camera.x / gs) * gs;
+        const sy = Math.floor(this.camera.y / gs) * gs;
+        const ex = this.camera.x + this.width / this.zoom + gs;
+        const ey = this.camera.y + this.height / this.zoom + gs;
+
+        ctx.beginPath();
+        for (let x = sx; x < ex; x += gs) { ctx.moveTo(x, sy); ctx.lineTo(x, ey); }
+        for (let y = sy; y < ey; y += gs) { ctx.moveTo(sx, y); ctx.lineTo(ex, y); }
+        ctx.stroke();
+
+        // Boundary
+        ctx.strokeStyle = 'rgba(255, 80, 80, 0.5)';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(50, 50, this.worldSize - 100, this.worldSize - 100);
+    }
+
+    drawFood() {
+        const ctx = this.ctx;
+        const vw = this.width / this.zoom, vh = this.height / this.zoom;
+
+        for (const f of this.foods) {
+            if (f.x < this.camera.x - 20 || f.x > this.camera.x + vw + 20 ||
+                f.y < this.camera.y - 20 || f.y > this.camera.y + vh + 20) continue;
+
+            if (f.isGold) {
+                // GOLD ORB - valuable! Pulse effect
+                const pulse = Math.sin(performance.now() / 150 + f.x) * 0.3 + 1;
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.size * pulse, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Inner glow
+                ctx.fillStyle = '#fff8dc';
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = `hsl(${f.hue}, 80%, 55%)`;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    drawPenguin(p) {
+        const ctx = this.ctx;
+        if (p.segments.length < 2) return;
+
+        // Body - draw every other segment for performance
+        for (let i = p.segments.length - 1; i >= 0; i -= 2) {
+            const s = p.segments[i];
+            const size = p.headSize * (1 - i / p.segments.length * 0.5) * 0.6;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Head
+        const h = p.segments[0];
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, p.headSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // White face
+        ctx.fillStyle = '#fff';
+        const fx = h.x + Math.cos(p.angle) * 4;
+        const fy = h.y + Math.sin(p.angle) * 4;
+        ctx.beginPath();
+        ctx.ellipse(fx, fy, p.headSize * 0.7, p.headSize * 0.6, p.angle, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        const ed = 7;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(h.x + Math.cos(p.angle + 0.5) * ed, h.y + Math.sin(p.angle + 0.5) * ed, 4, 0, Math.PI * 2);
+        ctx.arc(h.x + Math.cos(p.angle - 0.5) * ed, h.y + Math.sin(p.angle - 0.5) * ed, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Beak
+        const bd = p.headSize + 2;
+        const bx = h.x + Math.cos(p.angle) * bd;
+        const by = h.y + Math.sin(p.angle) * bd;
+        ctx.fillStyle = '#ff9500';
+        ctx.beginPath();
+        ctx.moveTo(bx + Math.cos(p.angle) * 10, by + Math.sin(p.angle) * 10);
+        ctx.lineTo(bx + Math.cos(p.angle + 2.4) * 6, by + Math.sin(p.angle + 2.4) * 6);
+        ctx.lineTo(bx + Math.cos(p.angle - 2.4) * 6, by + Math.sin(p.angle - 2.4) * 6);
+        ctx.closePath();
+        ctx.fill();
+
+        // Name + wager - BIGGER
+        if (!p.isPlayer) {
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#000';
+            ctx.fillText(p.name, h.x + 1, h.y - p.headSize - 22 + 1);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(p.name, h.x, h.y - p.headSize - 22);
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillStyle = '#00d26a';
+            ctx.fillText(`${p.wager} SOL`, h.x, h.y - p.headSize - 6);
+        }
+    }
+
+    drawMinimap() {
+        const ctx = this.ctx;
+        const s = 120, x = this.width - s - 15, y = this.height - s - 15;
+        const sc = s / this.worldSize;
+
+        ctx.fillStyle = 'rgba(0, 20, 40, 0.7)';
+        ctx.fillRect(x - 5, y - 5, s + 10, s + 10);
+
+        for (const e of this.enemies) {
+            if (e.isDead) continue;
+            ctx.fillStyle = e.color;
+            ctx.beginPath();
+            ctx.arc(x + e.segments[0].x * sc, y + e.segments[0].y * sc, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (!this.player.isDead) {
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.arc(x + this.player.segments[0].x * sc, y + this.player.segments[0].y * sc, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawHUD() {
+        const ctx = this.ctx;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('SPACE: Boost | Q: Cash Out', 20, this.height - 15);
+
+        if (this.isBoosting) {
+            ctx.fillStyle = '#3498db';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚡ BOOST', this.width / 2, 60);
+        }
+
+        if (this.totalEarnings > 0) {
+            ctx.fillStyle = '#00d26a';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`+${this.totalEarnings.toFixed(2)} SOL`, this.width - 25, 60);
+        }
+    }
+}
+
+window.SlitherGame = SlitherGame;
