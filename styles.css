@@ -1093,22 +1093,25 @@ body.game-active .game-console {
     color: #444;
     font-style: italic;
 }
+
 /* ===== Improved Game HUD ===== */
 .game-active .game-hud {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 30px;
+    right: 50px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 10px;
-    z-index: 100;
-    pointer-events: none; /* Let clicks pass through if needed, but buttons need pointer-events auto */
+    z-index: 1000;
+    pointer-events: none;
+    /* Let clicks pass through if needed, but buttons need pointer-events auto */
 }
 
 /* Exit Button Styling */
 .game-active #exitGame {
-    position: static; /* Inside flex container */
+    position: static;
+    /* Inside flex container */
     pointer-events: auto;
     background: var(--accent-red);
     color: white;
@@ -1131,10 +1134,12 @@ body.game-active .game-console {
 /* Stats Pill Styling */
 .game-active .game-hud .hud-item {
     pointer-events: auto;
-    background: rgba(10, 25, 40, 0.85); /* Dark arctic glass */
+    background: rgba(10, 25, 40, 0.85);
+    /* Dark arctic glass */
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 30px; /* Pill shape */
+    border-radius: 30px;
+    /* Pill shape */
     padding: 8px 20px;
     display: flex;
     align-items: center;
@@ -1163,9 +1168,14 @@ body.game-active .game-console {
     text-transform: uppercase;
     font-family: 'Outfit', sans-serif;
 }
-.btn-exit:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6); }
 
-.stats-pill, .earnings-pill {
+.btn-exit:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6);
+}
+
+.stats-pill,
+.earnings-pill {
     background: rgba(8, 20, 35, 0.85);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(0, 243, 255, 0.15);
@@ -1174,7 +1184,7 @@ body.game-active .game-console {
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
 }
 
 .stat-unit {

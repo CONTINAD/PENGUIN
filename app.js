@@ -220,25 +220,29 @@ class PenguinApp {
         const kills = (this.game && this.game.player) ? (this.game.player.killCount || 0) : 0;
         const multiplier = this.selectedWager > 0 ? (totalReturn / this.selectedWager).toFixed(2) : '0.00';
 
-        this.showGameModal(won, totalReturn, kills, timeSurvived, multiplier);
+        const potentialReturn = (this.selectedWager + earnings) * 0.9;
+        this.showGameModal(won, totalReturn, kills, timeSurvived, multiplier, potentialReturn);
     }
 
-    showGameModal(won, prize, kills, time, multiplier) {
+    showGameModal(won, prize, kills, time, multiplier, potential) {
         const modal = document.getElementById('gameModal');
         const title = document.getElementById('modTitle');
         const icon = document.getElementById('modIcon');
         const prizeEl = document.getElementById('modPrize');
+        const labelEl = document.querySelector('.modal-prize-label');
 
         if (won) {
             title.textContent = 'Victory!';
             title.classList.remove('loss');
             icon.textContent = '🏆';
+            if (labelEl) labelEl.textContent = 'PRIZE WON';
             prizeEl.style.color = '#00ff7f';
             prizeEl.textContent = `${prize.toFixed(2)} SOL`;
         } else {
             title.textContent = 'Eliminated!';
             title.classList.add('loss');
             icon.textContent = '☠️';
+            if (labelEl) labelEl.innerHTML = `LOST <span style="opacity:0.7; font-size: 0.8em; margin-left: 5px">(HAD ${potential.toFixed(2)} SOL)</span>`;
             prizeEl.style.color = '#ff4757';
             prizeEl.textContent = '- ' + this.selectedWager.toFixed(2) + ' SOL';
         }
