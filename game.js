@@ -99,7 +99,8 @@ class SlitherGame {
     handleCashOut() {
         if (this.player && !this.player.isDead) {
             this.player.isDead = true;
-            if (this.onGameOver) this.onGameOver(Math.floor(this.player.targetLength), true, this.playerWager + this.totalEarnings);
+            // Pass just totalEarnings - app.js will add the wager
+            if (this.onGameOver) this.onGameOver(Math.floor(this.player.targetLength), true, this.totalEarnings);
         }
     }
 
@@ -472,6 +473,31 @@ class SlitherGame {
                 }
             }
         }
+
+        // BOT VS BOT collisions - bots can kill each other!
+        for (let i = 0; i < this.enemies.length; i++) {
+            const e1 = this.enemies[i];
+            if (e1.isDead) continue;
+
+            for (let j = 0; j < this.enemies.length; j++) {
+                if (i === j) continue;
+                const e2 = this.enemies[j];
+                if (e2.isDead) continue;
+
+                const e1Head = e1.segments[0];
+                // Check if e1's head hits e2's body
+                for (let k = 6; k < e2.segments.length; k += 3) {
+                    const s = e2.segments[k];
+                    if (this.dist(e1Head.x, e1Head.y, s.x, s.y) < e1.headSize + 6) {
+                        // e1 hits e2's body = e1 dies, e2 gets the kill
+                        this.killPenguin(e1, e2);
+                        // Transfer value to killer
+                        e2.accumulatedKills = (e2.accumulatedKills || 0) + e1.wager + (e1.accumulatedKills || 0);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     killPenguin(v, k) {
@@ -721,12 +747,34 @@ class SlitherGame {
             ctx.fillText('⚡ BOOST', this.width / 2, 60);
         }
 
-        // Earnings in top right
+        // TOTAL BALANCE in top right (what you cash out with)
+        const totalBalance = this.playerWager + this.totalEarnings;
+        const cashoutAmount = totalBalance * 0.9; // After 10% fee
+
+        // Background for balance display
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.beginPath();
+        ctx.roundRect(this.width - 180, 25, 165, 65, 10);
+        ctx.fill();
+
+        // Total balance label
+        ctx.fillStyle = '#aaa';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('CASH OUT VALUE', this.width - 25, 42);
+
+        // Cash out amount (big)
+        ctx.fillStyle = '#00ff7f';
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillText(`${cashoutAmount.toFixed(2)} SOL`, this.width - 25, 68);
+
+        // Breakdown
+        ctx.fillStyle = '#888';
+        ctx.font = '11px sans-serif';
         if (this.totalEarnings > 0) {
-            ctx.fillStyle = '#00d26a';
-            ctx.font = 'bold 16px sans-serif';
-            ctx.textAlign = 'right';
-            ctx.fillText(`+${this.totalEarnings.toFixed(2)} SOL`, this.width - 25, 60);
+            ctx.fillText(`(${this.playerWager.toFixed(2)} + ${this.totalEarnings.toFixed(2)} kills - 10% fee)`, this.width - 25, 82);
+        } else {
+            ctx.fillText(`(${this.playerWager.toFixed(2)} wager - 10% fee)`, this.width - 25, 82);
         }
 
         // LEADERBOARD on left side
