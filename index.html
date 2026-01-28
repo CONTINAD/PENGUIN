@@ -107,27 +107,6 @@
             <!-- Game Canvas (Hidden until game starts) -->
             <div class="game-wrapper" id="gameWrapper">
                 <canvas id="gameCanvas"></canvas>
-                <!-- Game HUD (Floating) -->
-                <div class="game-hud">
-                    <button id="exitGame" class="btn-exit">Exit Game</button>
-
-                    <div class="stats-pill">
-                        <div class="stat-unit">
-                            <span class="stat-label">LENGTH</span>
-                            <span class="stat-value" id="snakeLength">10</span>
-                        </div>
-                        <div class="stat-divider"></div>
-                        <div class="stat-unit">
-                            <span class="stat-label">RANK</span>
-                            <span class="stat-value" id="playerRank">#1</span>
-                        </div>
-                    </div>
-
-                    <div class="earnings-pill" id="earningsHud" style="display: none;">
-                        <span class="stat-label">PROFIT</span>
-                        <span class="stat-value gold" id="prizePool">+0.00 SOL</span>
-                    </div>
-                </div>
             </div>
 
             <!-- Recent Winners -->
@@ -273,6 +252,28 @@
                 <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
             </div>
             <div class="modal-fee-note">*10% house fee already deducted</div>
+        </div>
+    </div>
+
+    <!-- Game HUD (Floating) -->
+    <div class="game-hud">
+        <button id="exitGame" class="btn-exit">Exit Game</button>
+
+        <div class="stats-pill">
+            <div class="stat-unit">
+                <span class="stat-label">LENGTH</span>
+                <span class="stat-value" id="snakeLength">10</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-unit">
+                <span class="stat-label">RANK</span>
+                <span class="stat-value" id="playerRank">#1</span>
+            </div>
+        </div>
+
+        <div class="earnings-pill" id="earningsHud" style="display: none;">
+            <span class="stat-label">PROFIT</span>
+            <span class="stat-value gold" id="prizePool">+0.00 SOL</span>
         </div>
     </div>
 
