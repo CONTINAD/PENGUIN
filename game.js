@@ -656,17 +656,27 @@ class SlitherGame {
         ctx.closePath();
         ctx.fill();
 
-        // Name + wager - BIGGER
+        // Name + wager - MUCH BIGGER with background for visibility
         if (!p.isPlayer) {
-            ctx.font = 'bold 16px sans-serif';
+            const labelY = h.y - p.headSize - 35;
+            const wagerY = h.y - p.headSize - 15;
+
+            // Background pill for readability
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.beginPath();
+            ctx.roundRect(h.x - 60, labelY - 15, 120, 42, 8);
+            ctx.fill();
+
+            // Name - large and white
+            ctx.font = 'bold 18px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillStyle = '#000';
-            ctx.fillText(p.name, h.x + 1, h.y - p.headSize - 22 + 1);
             ctx.fillStyle = '#fff';
-            ctx.fillText(p.name, h.x, h.y - p.headSize - 22);
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillStyle = '#00d26a';
-            ctx.fillText(`${p.wager} SOL`, h.x, h.y - p.headSize - 6);
+            ctx.fillText(p.name, h.x, labelY);
+
+            // Wager - green and prominent
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillStyle = '#00ff7f';
+            ctx.fillText(`💰 ${p.wager.toFixed(2)} SOL`, h.x, wagerY);
         }
     }
 
