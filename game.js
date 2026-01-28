@@ -685,11 +685,14 @@ class SlitherGame {
 
     drawHUD() {
         const ctx = this.ctx;
+
+        // Controls hint
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.font = '13px sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText('SPACE: Boost | Q: Cash Out', 20, this.height - 15);
 
+        // Boost indicator
         if (this.isBoosting) {
             ctx.fillStyle = '#3498db';
             ctx.font = 'bold 18px sans-serif';
@@ -697,12 +700,43 @@ class SlitherGame {
             ctx.fillText('⚡ BOOST', this.width / 2, 60);
         }
 
+        // Earnings in top right
         if (this.totalEarnings > 0) {
             ctx.fillStyle = '#00d26a';
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'right';
             ctx.fillText(`+${this.totalEarnings.toFixed(2)} SOL`, this.width - 25, 60);
         }
+
+        // LEADERBOARD on left side
+        const all = [this.player, ...this.enemies].filter(s => !s.isDead);
+        all.sort((a, b) => b.targetLength - a.targetLength);
+        const top5 = all.slice(0, 5);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(15, 80, 160, 130);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('🏆 LEADERBOARD', 25, 100);
+
+        ctx.font = '12px sans-serif';
+        top5.forEach((p, i) => {
+            const y = 120 + i * 20;
+            const isPlayer = p.isPlayer;
+
+            // Rank medal
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+
+            ctx.fillStyle = isPlayer ? '#ffd700' : '#fff';
+            ctx.fillText(`${medal} ${p.name}`, 25, y);
+
+            ctx.fillStyle = '#00d26a';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${p.wager.toFixed(2)}`, 165, y);
+            ctx.textAlign = 'left';
+        });
     }
 }
 

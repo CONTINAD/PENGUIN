@@ -821,6 +821,8 @@ body {
 }
 
 body.game-active .header,
+body.game-active .hero,
+body.game-active .how-to-play,
 body.game-active .token-section,
 body.game-active .footer,
 body.game-active .discord-float,
