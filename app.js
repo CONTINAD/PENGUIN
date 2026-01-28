@@ -143,15 +143,6 @@ class PenguinApp {
         this.elements.gameWrapper.classList.add('active');
         this.killFeedEl.style.display = 'flex';
 
-        // Position exit button
-        this.elements.exitGame.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 200;
-        `;
-
         // Initialize game
         this.game = new SlitherGame(this.elements.gameCanvas);
         this.game.setWager(this.selectedWager);

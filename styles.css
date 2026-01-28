@@ -1093,3 +1093,119 @@ body.game-active .game-console {
     color: #444;
     font-style: italic;
 }
+/* ===== Improved Game HUD ===== */
+.game-active .game-hud {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    z-index: 100;
+    pointer-events: none; /* Let clicks pass through if needed, but buttons need pointer-events auto */
+}
+
+/* Exit Button Styling */
+.game-active #exitGame {
+    position: static; /* Inside flex container */
+    pointer-events: auto;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.game-active #exitGame:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6);
+}
+
+/* Stats Pill Styling */
+.game-active .game-hud .hud-item {
+    pointer-events: auto;
+    background: rgba(10, 25, 40, 0.85); /* Dark arctic glass */
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 30px; /* Pill shape */
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Grouping check: The HTML structure has separate .hud-items by default.
+   We need to refactor HTML to group LENGTH and RANK into one pill if possible, 
+   or just style them to look like one if they are adjacent. 
+   But currently they are <div>s. 
+   Let's check index.html structure again. */
+
+/* ===== Refined HUD Styles ===== */
+.btn-exit {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+    transition: all 0.2s;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+}
+.btn-exit:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.6); }
+
+.stats-pill, .earnings-pill {
+    background: rgba(8, 20, 35, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 243, 255, 0.15);
+    border-radius: 40px;
+    padding: 8px 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+}
+
+.stat-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 10px;
+    color: #64b5f6;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 900;
+    color: #e0f7fa;
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+}
+
+.stat-value.gold {
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.stat-divider {
+    width: 1px;
+    height: 25px;
+    background: rgba(0, 243, 255, 0.2);
+}
