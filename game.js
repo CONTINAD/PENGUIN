@@ -546,6 +546,9 @@ class SlitherGame {
     killPenguin(v, k) {
         v.isDead = true;
 
+        // Track stats
+        if (k) k.killCount = (k.killCount || 0) + 1;
+
         // Drop regular food for growth
         for (let i = 0; i < v.segments.length; i += 6) {
             const s = v.segments[i];

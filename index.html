@@ -232,6 +232,44 @@
         Join Discord
     </a>
 
+    <!-- Win/Loss Modal -->
+    <div id="gameModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon" id="modIcon">🏆</div>
+            <h1 class="modal-title" id="modTitle">Victory!</h1>
+            <div class="modal-prize-label">PRIZE WON</div>
+            <div class="modal-prize-value" id="modPrize">$0.00</div>
+
+            <div class="modal-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-val" id="modTime">0s</div>
+                    <div class="stat-lbl">Time Survived</div>
+                </div>
+                <!-- Vertical Divider -->
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-val" id="modKills">0</div>
+                    <div class="stat-lbl">Eliminations</div>
+                </div>
+                <!-- Vertical Divider -->
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-val" id="modMult">1.0x</div>
+                    <div class="stat-lbl">Return Multiplier</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="homeBtn">🏠 Home</button>
+                <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+            </div>
+            <div class="modal-fee-note">*10% house fee already deducted</div>
+        </div>
+    </div>
+
     <script src="game.js"></script>
     <script src="app.js"></script>
 </body>

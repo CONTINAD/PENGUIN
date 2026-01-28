@@ -78,6 +78,10 @@ class PenguinApp {
         this.elements.playButton.addEventListener('click', () => this.startGame());
         this.elements.exitGame.addEventListener('click', () => this.exitGame());
         this.elements.copyCA.addEventListener('click', () => this.copyCA());
+
+        // Modal Buttons
+        document.getElementById('playAgainBtn').addEventListener('click', () => location.reload());
+        document.getElementById('homeBtn').addEventListener('click', () => location.reload());
     }
 
     async connectWallet() {
@@ -151,6 +155,7 @@ class PenguinApp {
         // Initialize game
         this.game = new SlitherGame(this.elements.gameCanvas);
         this.game.setWager(this.selectedWager);
+        this.startTime = Date.now();
 
         // Callbacks
         this.game.onScoreUpdate = (score) => {
@@ -208,32 +213,51 @@ class PenguinApp {
     handleGameOver(score, cashedOut, earnings) {
         if (this.game) {
             this.game.stop();
-            this.game = null;
         }
 
-        if (cashedOut) {
-            // Cash out - get wager back + earnings (minus 10% fee)
-            const totalReturn = (this.selectedWager + earnings) * 0.9;
+        const totalReturn = cashedOut ? (this.selectedWager + earnings) * 0.9 : 0;
+        const profit = totalReturn - this.selectedWager;
+        const won = cashedOut && totalReturn > 0;
+
+        if (won) {
             this.mockWallet.balance += totalReturn;
             this.elements.userBalance.textContent = this.mockWallet.balance.toFixed(2);
-            this.showNotification(`💰 Cashed out: +${totalReturn.toFixed(2)} SOL (10% fee)`);
-            if (totalReturn > this.selectedWager) this.addWinner('You', earnings);
-        } else {
-            // DIED - lose EVERYTHING (wager + kills go to killer)
-            this.showNotification(`☠️ You died! Lost ${this.selectedWager.toFixed(2)} SOL wager`, true);
+            if (profit > 0) this.addWinner('You', profit);
         }
 
-        setTimeout(() => {
-            document.body.classList.remove('game-active');
-            this.elements.gameConsole.classList.remove('game-active');
-            this.elements.gameWrapper.classList.remove('active');
-            this.killFeedEl.style.display = 'none';
-            this.elements.exitGame.style.cssText = '';
+        const timeSurvived = Math.floor((Date.now() - this.startTime) / 1000);
+        const kills = (this.game && this.game.player) ? (this.game.player.killCount || 0) : 0;
+        const multiplier = this.selectedWager > 0 ? (totalReturn / this.selectedWager).toFixed(2) : '0.00';
 
-            // Reset earnings HUD for next game
-            const earningsHud = document.getElementById('earningsHud');
-            if (earningsHud) earningsHud.style.display = 'none';
-        }, 2000);
+        this.showGameModal(won, totalReturn, kills, timeSurvived, multiplier);
+    }
+
+    showGameModal(won, prize, kills, time, multiplier) {
+        const modal = document.getElementById('gameModal');
+        const title = document.getElementById('modTitle');
+        const icon = document.getElementById('modIcon');
+        const prizeEl = document.getElementById('modPrize');
+
+        if (won) {
+            title.textContent = 'Victory!';
+            title.classList.remove('loss');
+            icon.textContent = '🏆';
+            prizeEl.style.color = '#00ff7f';
+            prizeEl.textContent = `${prize.toFixed(2)} SOL`;
+        } else {
+            title.textContent = 'Eliminated!';
+            title.classList.add('loss');
+            icon.textContent = '☠️';
+            prizeEl.style.color = '#ff4757';
+            prizeEl.textContent = '- ' + this.selectedWager.toFixed(2) + ' SOL';
+        }
+
+        document.getElementById('modTime').textContent = time + 's';
+        document.getElementById('modKills').textContent = kills;
+        document.getElementById('modMult').textContent = multiplier + 'x';
+
+        modal.classList.add('active');
+        this.elements.gameConsole.classList.remove('game-active'); // Un-focus game
     }
 
     addWinner(name, prize) {
