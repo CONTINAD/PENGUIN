@@ -1219,3 +1219,26 @@ body.game-active .game-console {
     height: 25px;
     background: rgba(0, 243, 255, 0.2);
 }
+/* ===== Fix Fullscreen Layout & Move HUD to Left ===== */
+body.game-active .container {
+    display: block !important; /* Disable grid in game mode to prevent layout shifting */
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.game-active .game-console {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    position: static !important;
+}
+
+/* Move HUD to Top Left to avoid overlapping Leaderboard */
+.game-active .game-hud {
+    right: auto !important;
+    left: 30px !important;
+    align-items: flex-start !important;
+    top: 30px !important;
+}
