@@ -166,6 +166,10 @@ class PenguinApp {
         };
 
         this.game.onWagerUpdate = (earnings) => {
+            const earningsHud = document.getElementById('earningsHud');
+            if (earnings > 0 && earningsHud) {
+                earningsHud.style.display = 'flex';
+            }
             this.elements.prizePool.textContent = `+${earnings.toFixed(2)} SOL`;
         };
 
@@ -225,6 +229,10 @@ class PenguinApp {
             this.elements.gameWrapper.classList.remove('active');
             this.killFeedEl.style.display = 'none';
             this.elements.exitGame.style.cssText = '';
+
+            // Reset earnings HUD for next game
+            const earningsHud = document.getElementById('earningsHud');
+            if (earningsHud) earningsHud.style.display = 'none';
         }, 2000);
     }
 

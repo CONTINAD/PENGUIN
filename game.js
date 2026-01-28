@@ -105,12 +105,21 @@ class SlitherGame {
 
     createPenguin(x, y, length, isPlayer = false, wager = 0) {
         const hue = isPlayer ? 200 : Math.random() * 360;
+
+        // Realistic gamer names
+        const prefixes = ['xX', '', '', 'Pro', 'Dark', 'Ice', 'Cold', 'Snowy', '', ''];
+        const names = ['Penguin', 'Slither', 'Snake', 'Gamer', 'Player', 'Hunter', 'Killer', 'Master', 'Shadow', 'Frost', 'Arctic', 'Blaze', 'Nova', 'Crypto', 'Degen', 'Ape', 'Whale', 'Chad', 'Based', 'Moon'];
+        const suffixes = ['Xx', '', '', '123', '420', '69', '_YT', '_TTV', 'HD', '', '', '99', '007', 'Pro', 'God'];
+        const randomName = prefixes[Math.floor(Math.random() * prefixes.length)] +
+            names[Math.floor(Math.random() * names.length)] +
+            suffixes[Math.floor(Math.random() * suffixes.length)];
+
         return {
             segments: Array.from({ length: length * 2 }, (_, i) => ({ x: x - i * 5, y })),
             angle: Math.random() * Math.PI * 2,
-            speed: isPlayer ? 5 : 3.5,
-            baseSpeed: isPlayer ? 5 : 3.5,
-            boostSpeed: isPlayer ? 9 : 5,
+            speed: isPlayer ? 5 : 3.2 + Math.random() * 0.8,
+            baseSpeed: isPlayer ? 5 : 3.2 + Math.random() * 0.8,
+            boostSpeed: isPlayer ? 9 : 5.5,
             length, targetLength: length,
             isPlayer, isDead: false,
             headSize: 18,
@@ -119,7 +128,8 @@ class SlitherGame {
             targetAngle: Math.random() * Math.PI * 2,
             changeTimer: 0,
             wager,
-            name: isPlayer ? 'You' : ['IcyPenguin', 'ArcticKing', 'FrostyBoi', 'SnowSlider', 'ColdCash', 'BlizzardPro'][Math.floor(Math.random() * 6)]
+            accumulatedKills: 0,
+            name: isPlayer ? 'You' : randomName
         };
     }
 
@@ -169,7 +179,8 @@ class SlitherGame {
         const d = 500 + Math.random() * (this.worldSize / 2 - 600);
         const x = this.worldSize / 2 + Math.cos(a) * d;
         const y = this.worldSize / 2 + Math.sin(a) * d;
-        const wager = Math.round((0.05 + Math.random() * 1.5) * 100) / 100;
+        // Enemies have SAME wager as player (realistic matchmaking)
+        const wager = this.playerWager || 0.5;
         this.enemies.push(this.createPenguin(x, y, 10 + Math.floor(Math.random() * 25), false, wager));
     }
 
