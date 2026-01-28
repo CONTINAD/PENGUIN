@@ -10,7 +10,7 @@ class SlitherGame {
         // Game world
         this.worldSize = 5000;
         this.camera = { x: 0, y: 0 };
-        this.zoom = 0.6;
+        this.zoom = 0.85;
 
         // Player
         this.player = null;
