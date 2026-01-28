@@ -18,6 +18,10 @@ class SlitherGame {
         this.mousePos = { x: 0, y: 0 };
         this.isBoosting = false;
 
+        // Cashout
+        this.isCashingOut = false;
+        this.cashOutTimer = 0;
+
         // Wager
         this.playerWager = 0;
         this.totalEarnings = 0;
@@ -85,10 +89,14 @@ class SlitherGame {
 
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') this.isBoosting = true;
-            if (e.code === 'KeyQ') this.handleCashOut();
+            if (e.code === 'KeyQ') this.isCashingOut = true;
         });
         document.addEventListener('keyup', (e) => {
             if (e.code === 'Space') this.isBoosting = false;
+            if (e.code === 'KeyQ') {
+                this.isCashingOut = false;
+                this.cashOutTimer = 0;
+            }
         });
 
         window.addEventListener('resize', () => this.setupCanvas());
@@ -211,6 +219,9 @@ class SlitherGame {
             if (killer.isPlayer) {
                 this.totalEarnings += killerBonus;
                 if (this.onWagerUpdate) this.onWagerUpdate(this.totalEarnings);
+            } else {
+                // If bot, update their wager display
+                killer.wager += killerBonus;
             }
         }
 
@@ -240,6 +251,18 @@ class SlitherGame {
 
     update(delta) {
         if (this.player.isDead) return;
+
+        // Cashout Timer Logic
+        if (this.isCashingOut) {
+            this.cashOutTimer += delta * 16.67;
+            if (this.cashOutTimer > 3000) {
+                this.handleCashOut();
+                this.isCashingOut = false;
+                this.cashOutTimer = 0;
+            }
+        } else {
+            this.cashOutTimer = 0;
+        }
 
         const cx = this.width / 2, cy = this.height / 2;
         this.targetAngle = Math.atan2(this.mousePos.y - cy, this.mousePos.x - cx);
@@ -513,8 +536,6 @@ class SlitherGame {
                     if (this.dist(e1Head.x, e1Head.y, s.x, s.y) < e1.headSize + 6) {
                         // e1 hits e2's body = e1 dies, e2 gets the kill
                         this.killPenguin(e1, e2);
-                        // Transfer value to killer
-                        e2.accumulatedKills = (e2.accumulatedKills || 0) + e1.wager + (e1.accumulatedKills || 0);
                         break;
                     }
                 }
@@ -759,7 +780,34 @@ class SlitherGame {
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.font = '13px sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('SPACE: Boost | Q: Cash Out', 20, this.height - 15);
+        ctx.fillText('SPACE: Boost | HOLD Q: Cash Out', 20, this.height - 15);
+
+        // CASH OUT PROGRESS BAR
+        if (this.isCashingOut && this.cashOutTimer > 0) {
+            const progress = Math.min(1, this.cashOutTimer / 3000);
+            const barW = 200, barH = 20;
+            const bx = this.width / 2 - barW / 2;
+            const by = this.height / 2 + 100;
+
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('HOLD TO CASH OUT...', this.width / 2, by - 10);
+
+            // BG
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(bx, by, barW, barH);
+
+            // Fill
+            ctx.fillStyle = '#00ff7f';
+            ctx.fillRect(bx, by, barW * progress, barH);
+
+            // Border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx, by, barW, barH);
+        }
 
         // Boost indicator
         if (this.isBoosting) {
@@ -825,7 +873,12 @@ class SlitherGame {
 
             ctx.fillStyle = '#00d26a';
             ctx.textAlign = 'right';
-            ctx.fillText(`${p.wager.toFixed(2)}`, 165, y);
+
+            // Calculate real-time value for leaderboard
+            let displayValue = p.wager;
+            if (p.isPlayer) displayValue = this.playerWager + this.totalEarnings;
+
+            ctx.fillText(`${displayValue.toFixed(2)}`, 165, y);
             ctx.textAlign = 'left';
         });
     }
