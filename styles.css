@@ -1253,3 +1253,12 @@ body.game-active .container {
 .game-active .game-hud {
     left: 60px !important;
 }
+
+/* ===== FINAL HUD FIX - Remove centering transform ===== */
+.game-active .game-hud {
+    left: 20px !important;
+    top: 20px !important;
+    transform: none !important;
+    right: auto !important;
+    align-items: flex-start !important;
+}
