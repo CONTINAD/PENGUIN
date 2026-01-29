@@ -683,70 +683,155 @@ class SlitherGame {
         const ctx = this.ctx;
         if (p.segments.length < 2) return;
 
-        // Body - draw every other segment for performance
-        for (let i = p.segments.length - 1; i >= 0; i -= 2) {
+        const h = p.segments[0];
+
+        // === BODY GLOW EFFECT ===
+        ctx.save();
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 15;
+
+        // Body segments with gradient fade
+        for (let i = p.segments.length - 1; i >= 0; i--) {
             const s = p.segments[i];
-            const size = p.headSize * (1 - i / p.segments.length * 0.5) * 0.6;
-            ctx.fillStyle = p.color;
+            const progress = i / p.segments.length;
+            const size = p.headSize * (1 - progress * 0.4) * 0.7;
+
+            // Create gradient for each segment
+            const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, size);
+            grad.addColorStop(0, p.color);
+            grad.addColorStop(0.7, p.color);
+            grad.addColorStop(1, 'rgba(0,0,0,0.3)');
+
+            ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.arc(s.x, s.y, size, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.restore();
 
-        // Head
-        const h = p.segments[0];
-        ctx.fillStyle = p.color;
+        // === HEAD with gradient ===
+        const headGrad = ctx.createRadialGradient(
+            h.x - p.headSize * 0.3, h.y - p.headSize * 0.3, 0,
+            h.x, h.y, p.headSize * 1.2
+        );
+        headGrad.addColorStop(0, '#4a90d9'); // Lighter center
+        headGrad.addColorStop(0.5, p.color);
+        headGrad.addColorStop(1, '#1a3a5c'); // Darker edge
+
+        ctx.fillStyle = headGrad;
         ctx.beginPath();
         ctx.arc(h.x, h.y, p.headSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // White face
+        // Head outline
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // === WHITE FACE (belly) ===
+        const fx = h.x + Math.cos(p.angle) * 3;
+        const fy = h.y + Math.sin(p.angle) * 3;
+
+        const faceGrad = ctx.createRadialGradient(fx, fy, 0, fx, fy, p.headSize * 0.7);
+        faceGrad.addColorStop(0, '#ffffff');
+        faceGrad.addColorStop(0.8, '#e8e8e8');
+        faceGrad.addColorStop(1, '#d0d0d0');
+
+        ctx.fillStyle = faceGrad;
+        ctx.beginPath();
+        ctx.ellipse(fx, fy, p.headSize * 0.65, p.headSize * 0.55, p.angle, 0, Math.PI * 2);
+        ctx.fill();
+
+        // === EYES - Bigger and cuter ===
+        const ed = 8;
+        const eyeSize = 5;
+        const ex1 = h.x + Math.cos(p.angle + 0.45) * ed;
+        const ey1 = h.y + Math.sin(p.angle + 0.45) * ed;
+        const ex2 = h.x + Math.cos(p.angle - 0.45) * ed;
+        const ey2 = h.y + Math.sin(p.angle - 0.45) * ed;
+
+        // Eye whites
         ctx.fillStyle = '#fff';
-        const fx = h.x + Math.cos(p.angle) * 4;
-        const fy = h.y + Math.sin(p.angle) * 4;
         ctx.beginPath();
-        ctx.ellipse(fx, fy, p.headSize * 0.7, p.headSize * 0.6, p.angle, 0, Math.PI * 2);
+        ctx.arc(ex1, ey1, eyeSize, 0, Math.PI * 2);
+        ctx.arc(ex2, ey2, eyeSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eyes
-        const ed = 7;
-        ctx.fillStyle = '#000';
+        // Pupils (looking forward)
+        const pupilOffset = 1.5;
+        const px1 = ex1 + Math.cos(p.angle) * pupilOffset;
+        const py1 = ey1 + Math.sin(p.angle) * pupilOffset;
+        const px2 = ex2 + Math.cos(p.angle) * pupilOffset;
+        const py2 = ey2 + Math.sin(p.angle) * pupilOffset;
+
+        ctx.fillStyle = '#1a1a2e';
         ctx.beginPath();
-        ctx.arc(h.x + Math.cos(p.angle + 0.5) * ed, h.y + Math.sin(p.angle + 0.5) * ed, 4, 0, Math.PI * 2);
-        ctx.arc(h.x + Math.cos(p.angle - 0.5) * ed, h.y + Math.sin(p.angle - 0.5) * ed, 4, 0, Math.PI * 2);
+        ctx.arc(px1, py1, eyeSize * 0.6, 0, Math.PI * 2);
+        ctx.arc(px2, py2, eyeSize * 0.6, 0, Math.PI * 2);
         ctx.fill();
 
-        // Beak
-        const bd = p.headSize + 2;
+        // Eye highlights (cute sparkle)
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(px1 - 1, py1 - 1, 1.5, 0, Math.PI * 2);
+        ctx.arc(px2 - 1, py2 - 1, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // === BEAK - 3D orange beak ===
+        const bd = p.headSize + 3;
         const bx = h.x + Math.cos(p.angle) * bd;
         const by = h.y + Math.sin(p.angle) * bd;
-        ctx.fillStyle = '#ff9500';
+
+        // Beak gradient
+        const beakGrad = ctx.createLinearGradient(
+            bx, by - 5,
+            bx, by + 5
+        );
+        beakGrad.addColorStop(0, '#ffb347');
+        beakGrad.addColorStop(0.5, '#ff9500');
+        beakGrad.addColorStop(1, '#e67300');
+
+        ctx.fillStyle = beakGrad;
         ctx.beginPath();
-        ctx.moveTo(bx + Math.cos(p.angle) * 10, by + Math.sin(p.angle) * 10);
-        ctx.lineTo(bx + Math.cos(p.angle + 2.4) * 6, by + Math.sin(p.angle + 2.4) * 6);
-        ctx.lineTo(bx + Math.cos(p.angle - 2.4) * 6, by + Math.sin(p.angle - 2.4) * 6);
+        ctx.moveTo(bx + Math.cos(p.angle) * 12, by + Math.sin(p.angle) * 12);
+        ctx.lineTo(bx + Math.cos(p.angle + 2.2) * 7, by + Math.sin(p.angle + 2.2) * 7);
+        ctx.lineTo(bx + Math.cos(p.angle - 2.2) * 7, by + Math.sin(p.angle - 2.2) * 7);
         ctx.closePath();
         ctx.fill();
 
-        // Name + wager - MUCH BIGGER with background for visibility
-        if (!p.isPlayer) {
-            const labelY = h.y - p.headSize - 35;
-            const wagerY = h.y - p.headSize - 15;
+        // Beak outline
+        ctx.strokeStyle = '#cc7000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
-            // Background pill for readability
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        // === NAME TAG for other players ===
+        if (!p.isPlayer) {
+            const labelY = h.y - p.headSize - 38;
+            const wagerY = h.y - p.headSize - 18;
+
+            // Background pill with gradient
+            const pillGrad = ctx.createLinearGradient(h.x - 60, labelY - 18, h.x - 60, wagerY + 5);
+            pillGrad.addColorStop(0, 'rgba(20, 30, 50, 0.9)');
+            pillGrad.addColorStop(1, 'rgba(10, 15, 25, 0.95)');
+
+            ctx.fillStyle = pillGrad;
             ctx.beginPath();
-            ctx.roundRect(h.x - 60, labelY - 15, 120, 42, 8);
+            ctx.roundRect(h.x - 65, labelY - 18, 130, 48, 10);
             ctx.fill();
 
-            // Name - large and white
-            ctx.font = 'bold 18px sans-serif';
+            // Pill border
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Name
+            ctx.font = 'bold 16px "Outfit", sans-serif';
             ctx.textAlign = 'center';
             ctx.fillStyle = '#fff';
             ctx.fillText(p.name, h.x, labelY);
 
-            // Wager - green and prominent
-            ctx.font = 'bold 16px sans-serif';
+            // Wager with icon
+            ctx.font = 'bold 14px "Outfit", sans-serif';
             ctx.fillStyle = '#00ff7f';
             ctx.fillText(`💰 ${p.wager.toFixed(2)} SOL`, h.x, wagerY);
         }
