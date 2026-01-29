@@ -1262,3 +1262,19 @@ body.game-active .container {
     right: auto !important;
     align-items: flex-start !important;
 }
+
+/* ===== HUD Top Center Position ===== */
+.game-active .game-hud {
+    left: 50% !important;
+    top: 20px !important;
+    transform: translateX(-50%) !important;
+    right: auto !important;
+    align-items: center !important;
+    flex-direction: row !important;
+    gap: 15px !important;
+}
+
+/* Exit button inline with stats */
+.game-active .game-hud .btn-exit {
+    order: -1; /* Put exit button first */
+}
